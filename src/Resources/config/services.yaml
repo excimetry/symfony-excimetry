@@ -1,0 +1,24 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # Register all services from the bundle
+    Excimetry\ExcimetryBundle\:
+        resource: '../../*'
+        exclude: '../../{DependencyInjection,Resources,Tests}'
+
+    # Example service configuration
+    Excimetry\ExcimetryBundle\Service\DummyService:
+        arguments:
+            $enabled: '%excimetry.enabled%'
+        public: true
+
+    # Excimetry service
+    Excimetry\ExcimetryBundle\Service\ExcimetryService:
+        arguments:
+            $enabled: '%excimetry.enabled%'
+            $period: '%excimetry.period%'
+            $mode: '%excimetry.mode%'
+        public: true
