@@ -1,6 +1,12 @@
 # ExcimetryBundle
 
-A Symfony bundle for integrating Excimetry with your Symfony application.
+A Symfony bundle for integrating [Excimetry](https://github.com/excimetry/excimetry) with your Symfony application.
+
+<p align="center">
+<a href="https://github.com/excimetry/symfony-excimetry/actions"><img src="https://github.com/excimetry/symfony-excimetry/actions/workflows/tests.yml/badge.svg" alt="Tests status"></a>
+<a href="https://packagist.org/packages/excimetry/symfony-excimetry"><img src="https://img.shields.io/packagist/v/excimetry/symfony-excimetry.svg" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/excimetry/symfony-excimetry"><img src="https://img.shields.io/packagist/l/excimetry/symfony-excimetry.svg" alt="License"></a>
+</p>
 
 ## Requirements
 
@@ -62,78 +68,51 @@ return [
 
 The bundle provides an `ExcimetryService` that wraps the Excimetry profiler. You can use it as follows:
 
+You don't need to call `->start()` method if you enabled the bundle.
+
 ```php
 <?php
-
-namespace App\Controller;
-
-use Excimetry\ExcimetryBundle\Service\ExcimetryService;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-
-class ExampleController extends AbstractController
+class Kernel extends BaseKernel
 {
-    #[Route('/example', name: 'app_example')]
-    public function index(ExcimetryService $excimetryService): Response
+   ... 
+   
+    private ?ExcimetryService $excimetryService;
+
+    public function boot(): void
     {
-        // Start profiling (if not already started)
-        $excimetryService->start();
+        if (!$this->booted) {
+            // Start the profiler before booting the kernel
+            if ($this->container && $this->container->has(ExcimetryService::class)) {
+                $this->excimetryService = $this->container->get(ExcimetryService::class);
+            }
 
-        // Your code to profile
-        $result = $this->doSomething();
-
-        // Stop profiling
-        $excimetryService->stop();
-
-        // Get the Excimetry instance for more advanced operations
-        $excimetry = $excimetryService->getExcimetry();
-
-        // Save the profile to a file
-        $excimetry->save();
-
-        return $this->render('example/index.html.twig', [
-            'result' => $result,
-        ]);
+           ...
+        }
     }
 
-    private function doSomething(): string
+    public function terminate(Request $request, Response $response): void
     {
-        // Some code to profile
-        return 'Hello from ExcimetryBundle!';
+        if (!is_null($this->excimetryService)) {
+            $log = $this
+                ->excimetryService
+                ->stop()
+                ->getExcimetry()
+                ->getLog();
+            
+            $exporter = new PyroscopeBackend(
+                serverUrl: 'https://pyro:4040',
+                appName: 'symfony_app',
+                exporter: new CollapsedExporter()
+            );
+            
+            $exporter->send($log);
+        }
+
+        ...
     }
 }
+
 ```
-
-## Testing
-
-The bundle comes with a comprehensive test suite. To run the tests, you need to have PHPUnit installed.
-
-### Running Tests
-
-You can run the tests using the PHPUnit configuration provided:
-
-```bash
-# Run all tests
-vendor/bin/phpunit
-
-# Run a specific test suite
-vendor/bin/phpunit --testsuite "ExcimetryBundle Test Suite"
-
-# Run a specific test file
-vendor/bin/phpunit tests/DependencyInjection/ConfigurationTest.php
-
-# Run with code coverage report
-vendor/bin/phpunit --coverage-html coverage-report
-```
-
-### Test Structure
-
-The tests are organized into the following directories:
-
-- `tests/DependencyInjection/`: Tests for the bundle's dependency injection configuration
-- `tests/Functional/`: Functional tests that test the bundle in a real Symfony application
-- `tests/`: Other tests, including the installer test
 
 ## License
 

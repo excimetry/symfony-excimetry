@@ -55,7 +55,10 @@ class ExcimetryService
      */
     public function start(): self
     {
-        $this->excimetry->start();
+        if (!$this->excimetry->isRunning()) {
+            $this->excimetry->start();
+        }
+
         return $this;
     }
 
