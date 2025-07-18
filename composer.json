@@ -1,6 +1,7 @@
 {
     "name": "excimetry/symfony-excimetry",
     "description": "Excimetry Bundle for Symfony",
+    "keywords": ["symfony-bundle", "profiling", "eximer", "excimetry", "opentelemetry", "pyroscope", "symfony"],
     "type": "symfony-bundle",
     "license": "Apache-2.0",
     "require": {
