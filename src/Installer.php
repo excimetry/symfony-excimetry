@@ -17,6 +17,14 @@ class Installer
      */
     public static function postInstall(Event $event)
     {
+        $io = $event->getIO();
+
+        // Ask for confirmation before executing post-scripts
+        if (!$io->askConfirmation('<question>Do you want to execute post-install scripts and copy configuration files? (y/n) </question>', true)) {
+            $io->write('<info>Post-install scripts skipped.</info>');
+            return;
+        }
+
         $vendorDir = $event->getComposer()->getConfig()->get('vendor-dir');
         $projectDir = dirname($vendorDir);
 
@@ -34,7 +42,7 @@ class Installer
 
         if (!file_exists($yamlTargetFile)) {
             $filesystem->copy($yamlSourceFile, $yamlTargetFile);
-            $event->getIO()->write('<info>Created YAML config file: config/packages/excimetry.yaml</info>');
+            $io->write('<info>Created YAML config file: config/packages/excimetry.yaml</info>');
         }
 
         // Copy PHP configuration file if it doesn't exist
@@ -43,7 +51,7 @@ class Installer
 
         if (!file_exists($phpTargetFile)) {
             $filesystem->copy($phpSourceFile, $phpTargetFile);
-            $event->getIO()->write('<info>Created PHP config file: config/packages/excimetry.php</info>');
+            $io->write('<info>Created PHP config file: config/packages/excimetry.php</info>');
         }
     }
 }
